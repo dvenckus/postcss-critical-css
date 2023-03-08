@@ -1,6 +1,8 @@
 @critical test1.css test2.css {
 
   .foo {
+    critical-selector: this;
+    critical-filename: test1.css test2.css;
     display: flex;
     width: calc(100% - 200px);
   }
