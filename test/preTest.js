@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const fs = require("fs");
 const { bold } = require("chalk");
-const postcssCriticalCSS = require("..");
+const postcssCriticalCSS = require("../");
 const cliArgs = require("minimist")(process.argv.slice(2), {
   boolean: ["minify", "preserve"],
   default: { minify: true, preserve: true }

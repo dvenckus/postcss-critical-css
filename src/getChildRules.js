@@ -29,7 +29,7 @@ export function getChildRules(css: Object, parent: Object): Array<Object> {
       // Create new at-rule to append only necessary selector to critical
       const criticalAtRule = postcss.atRule({
         name: atRule.name,
-        params: atRule.params
+        params: atRule.params,
       });
       /**
        * Should append even if parent selector, but make sure the two rules
