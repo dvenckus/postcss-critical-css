@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 const fs = require("fs");
 const { bold } = require("chalk");
-const postcssCriticalCSS = require("../");
+const postcss = require("postcss");
+const criticalCSS = require("..");
 const cliArgs = require("minimist")(process.argv.slice(2), {
   boolean: ["minify", "preserve"],
-  default: { minify: true, preserve: true }
+  default: { minify: true, preserve: true },
 });
 const fixturesDir = cliArgs["fixtures-dir"] || "fixtures";
 let basePath = cliArgs.outputPath || `${process.cwd()}/test/${fixturesDir}`;
@@ -14,7 +15,7 @@ let pluginOpts = Object.assign(
     minify: cliArgs.minify,
     outputDest: cliArgs.outputDest,
     outputPath: basePath,
-    preserve: typeof cliArgs.preserve !== "undefined" ? cliArgs.preserve : true
+    preserve: typeof cliArgs.preserve !== "undefined" ? cliArgs.preserve : true,
   }
 );
 if (cliArgs.noArgs) {
@@ -23,18 +24,19 @@ if (cliArgs.noArgs) {
 }
 
 function useFileData(data, file) {
-  postcssCriticalCSS
+  console.log(pluginOpts);
+  let result = postcss([criticalCSS(pluginOpts)])
     .process(data, {}, pluginOpts)
-    .catch(err => {
+    .catch((err) => {
       console.error(bold.red("Error: "), err);
       process.exit(1);
     })
-    .then(result => {
+    .then((result) => {
       fs.writeFile(
         `${basePath}/${file.split(".")[0]}.non-critical.actual.css`,
         result.css,
         "utf8",
-        err => {
+        (err) => {
           if (err) {
             throw new Error(err);
           }
@@ -45,9 +47,9 @@ function useFileData(data, file) {
 
 function deleteOldFixtures(files) {
   let totalProcessed = 0;
-  files.forEach(file => {
+  files.forEach((file) => {
     if (file.indexOf(".actual") !== -1 || file === "critical.css") {
-      fs.unlink(`${basePath}/${file}`, err => {
+      fs.unlink(`${basePath}/${file}`, (err) => {
         if (err) {
           throw new Error(err);
         }
@@ -65,7 +67,7 @@ function writeNewFixtures(totalProcessed, files) {
   if (totalProcessed !== files.length) {
     return;
   }
-  files.forEach(file => {
+  files.forEach((file) => {
     if (
       file.indexOf(".css") !== -1 &&
       file.indexOf(".expected") === -1 &&

@@ -137,26 +137,25 @@ function writeCriticalFile(filePath: string, css: string) {
  * @param {Object} opts
  * @returns {Function}
  */
-module.exports = (opts: Object): Object => {
-  const filteredOptions = Object.keys(opts).reduce(
-    (acc: Object, key: string): Object =>
-      typeof opts[key] !== "undefined" ? { ...acc, [key]: opts[key] } : acc,
-    {}
-  );
-  const args = {
-    outputPath: process.cwd(),
-    outputDest: "critical.css",
-    preserve: true,
-    minify: true,
-    dryRun: false,
-    destDelim: " ",
-    ...filteredOptions,
-  };
-  append = false;
-
+module.exports = (opts: Object): Function => {
   return {
     postcssPlugin: "postcss-critical-css",
     Once(root: Object): Object {
+      const filteredOptions = Object.keys(opts).reduce(
+        (acc: Object, key: string): Object =>
+          typeof opts[key] !== "undefined" ? { ...acc, [key]: opts[key] } : acc,
+        {}
+      );
+      const args = {
+        outputPath: process.cwd(),
+        outputDest: "critical.css",
+        preserve: true,
+        minify: true,
+        dryRun: false,
+        destDelim: " ",
+        ...filteredOptions,
+      };
+      append = false;
       const { dryRun, preserve, minify, outputPath, outputDest, destDelim } =
         args;
       const criticalOutput = getCriticalRules(root, outputDest, destDelim);
