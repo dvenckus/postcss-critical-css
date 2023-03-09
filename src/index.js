@@ -138,26 +138,29 @@ function writeCriticalFile(filePath: string, css: string) {
  * @returns {Function}
  */
 module.exports = (opts: Object): Function => {
+  const filteredOptions = Object.keys(opts).reduce(
+    (acc: Object, key: string): Object =>
+      typeof opts[key] !== "undefined" ? { ...acc, [key]: opts[key] } : acc,
+    {}
+  );
+  const args = {
+    outputPath: process.cwd(),
+    outputDest: "critical.css",
+    preserve: true,
+    minify: true,
+    dryRun: false,
+    destDelim: " ",
+    ...filteredOptions,
+  };
+  append = false;
   return {
     postcssPlugin: "postcss-critical-css",
-    Once(root: Object): Object {
-      const filteredOptions = Object.keys(opts).reduce(
-        (acc: Object, key: string): Object =>
-          typeof opts[key] !== "undefined" ? { ...acc, [key]: opts[key] } : acc,
-        {}
-      );
-      const args = {
-        outputPath: process.cwd(),
-        outputDest: "critical.css",
-        preserve: true,
-        minify: true,
-        dryRun: false,
-        destDelim: " ",
-        ...filteredOptions,
-      };
-      append = false;
-      const { dryRun, preserve, minify, outputPath, outputDest, destDelim } =
+    Once(root: Object, opts: Object): Object {
+      var { dryRun, preserve, minify, outputPath, outputDest, destDelim } =
         args;
+      dryRun = dryRun === true;
+      preserve = preserve === true;
+      minify = minify === true;
       const criticalOutput = getCriticalRules(root, outputDest, destDelim);
       return Object.keys(criticalOutput).reduce(
         (init: Object, cur: string): Function => {
@@ -167,7 +170,7 @@ module.exports = (opts: Object): Function => {
             criticalCSS.append(rule.clone())
           );
           return (
-            postcss(minify ? [cssnano] : [])
+            postcss(minify === true ? [cssnano] : [])
               // @TODO Use from/to correctly.
               .process(criticalCSS, {
                 from: undefined,

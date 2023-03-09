@@ -7,3 +7,6 @@ npm-debug.log
 # Ignore generated css files
 !example/example.css
 example/*.css
+
+# Ignore test output
+test/output/*.css
