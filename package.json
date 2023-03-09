@@ -1,6 +1,6 @@
 {
   "name": "@veritashealth/postcss-critical-css",
-  "version": "3.0.7",
+  "version": "3.0.8",
   "description": "Generate critical CSS using PostCSS",
   "main": "index.js",
   "repository": {
