@@ -4,7 +4,7 @@ This plugin allows the user to define and output critical CSS using custom atRul
 
 ## Install
 
-`npm install postcss-critical-css --save`
+`npm install @veritashealth/postcss-critical-css --save`
 
 ## Examples
 
