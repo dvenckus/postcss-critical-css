@@ -1,63 +1,69 @@
 #!/usr/bin/env node
 const fs = require("fs");
 const { bold } = require("chalk");
-const postcssCriticalCSS = require("..");
+const postcss = require("postcss");
+const criticalCSS = require("..");
 const cliArgs = require("minimist")(process.argv.slice(2), {
   boolean: ["minify", "preserve"],
-  default: { minify: true, preserve: true }
+  default: { minify: true, preserve: true },
 });
 const fixturesDir = cliArgs["fixtures-dir"] || "fixtures";
+const testOutput = "test/output";
+const testOutputPath = `${process.cwd()}/${testOutput}`;
 let basePath = cliArgs.outputPath || `${process.cwd()}/test/${fixturesDir}`;
 let pluginOpts = Object.assign(
   {},
   {
     minify: cliArgs.minify,
     outputDest: cliArgs.outputDest,
-    outputPath: basePath,
-    preserve: typeof cliArgs.preserve !== "undefined" ? cliArgs.preserve : true
+    outputPath: testOutput,
+    preserve: typeof cliArgs.preserve !== "undefined" ? cliArgs.preserve : true,
   }
 );
 if (cliArgs.noArgs) {
-  basePath = process.cwd();
-  pluginOpts = {};
+  basePath = testOutputPath;
+  pluginOpts = {
+    outputPath: testOutput,
+  };
 }
 
+// console.log("pluginOpts: ", pluginOpts);
+
 function useFileData(data, file) {
-  postcssCriticalCSS
-    .process(data, {}, pluginOpts)
-    .catch(err => {
+  postcss([criticalCSS(pluginOpts)])
+    .process(data)
+    .catch((err) => {
       console.error(bold.red("Error: "), err);
       process.exit(1);
     })
-    .then(result => {
-      fs.writeFile(
-        `${basePath}/${file.split(".")[0]}.non-critical.actual.css`,
-        result.css,
-        "utf8",
-        err => {
-          if (err) {
-            throw new Error(err);
-          }
+    .then((result) => {
+      const filename = `${testOutputPath}/${
+        file.split(".")[0]
+      }.non-critical.actual.css`;
+      // console.log(`Pretest creating: ${filename}`);
+      fs.writeFile(filename, result.css, "utf8", (err) => {
+        if (err) {
+          throw new Error(err);
         }
-      );
+      });
     });
 }
 
 function deleteOldFixtures(files) {
   let totalProcessed = 0;
-  files.forEach(file => {
+  files.forEach((file) => {
     if (file.indexOf(".actual") !== -1 || file === "critical.css") {
-      fs.unlink(`${basePath}/${file}`, err => {
-        if (err) {
-          throw new Error(err);
-        }
-        totalProcessed++;
-        writeNewFixtures(totalProcessed, files);
-      });
-    } else {
-      totalProcessed++;
-      writeNewFixtures(totalProcessed, files);
+      const filePath = `${testOutputPath}/${file}`;
+      if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            throw new Error(err);
+          }
+        });
+      }
     }
+    totalProcessed++;
+    writeNewFixtures(totalProcessed, files);
   });
 }
 
@@ -65,7 +71,7 @@ function writeNewFixtures(totalProcessed, files) {
   if (totalProcessed !== files.length) {
     return;
   }
-  files.forEach(file => {
+  files.forEach((file) => {
     if (
       file.indexOf(".css") !== -1 &&
       file.indexOf(".expected") === -1 &&
@@ -83,6 +89,7 @@ function writeNewFixtures(totalProcessed, files) {
 }
 
 fs.readdir(basePath, "utf8", (err, files) => {
+  // console.log("files: ", files);
   if (err) {
     throw new Error(err);
   }

@@ -1,12 +1,10 @@
 // @flow
-
 import { green, yellow } from "chalk";
 import postcss from "postcss";
 import cssnano from "cssnano";
 import fs from "fs-extra";
 import path from "path";
 import { getCriticalRules } from "./getCriticalRules";
-
 /**
  * Append to an existing critical CSS file?
  */
@@ -135,17 +133,14 @@ function writeCriticalFile(filePath: string, css: string) {
 }
 
 /**
- * Primary plugin function.
- *
- * @param {object} options Object of function args.
- * @return {function} function for PostCSS plugin.
+ * Main plugin function.
+ * @param {Object} opts
+ * @returns {Function}
  */
-function buildCritical(options: Object = {}): Function {
-  const filteredOptions = Object.keys(options).reduce(
+module.exports = (opts: Object): Function => {
+  const filteredOptions = Object.keys(opts).reduce(
     (acc: Object, key: string): Object =>
-      typeof options[key] !== "undefined"
-        ? { ...acc, [key]: options[key] }
-        : acc,
+      typeof opts[key] !== "undefined" ? { ...acc, [key]: opts[key] } : acc,
     {}
   );
   const args = {
@@ -154,32 +149,40 @@ function buildCritical(options: Object = {}): Function {
     preserve: true,
     minify: true,
     dryRun: false,
-    ...filteredOptions
+    destDelim: " ",
+    ...filteredOptions,
   };
   append = false;
-  return (css: Object): Object => {
-    const { dryRun, preserve, minify, outputPath, outputDest } = args;
-    const criticalOutput = getCriticalRules(css, outputDest);
-    return Object.keys(criticalOutput).reduce(
-      (init: Object, cur: string): Function => {
-        const criticalCSS = postcss.root();
-        const filePath = path.join(outputPath, cur);
-        criticalOutput[cur].each((rule: Object): Function =>
-          criticalCSS.append(rule.clone())
-        );
-        return (
-          postcss(minify ? [cssnano] : [])
-            // @TODO Use from/to correctly.
-            .process(criticalCSS, {
-              from: undefined
-            })
-            .then(dryRunOrWriteFile.bind(null, dryRun, filePath))
-            .then(clean.bind(null, css, preserve))
-        );
-      },
-      {}
-    );
+  return {
+    postcssPlugin: "postcss-critical-css",
+    Once(root: Object, opts: Object): Object {
+      var { dryRun, preserve, minify, outputPath, outputDest, destDelim } =
+        args;
+      dryRun = dryRun === true;
+      preserve = preserve === true;
+      minify = minify === true;
+      const criticalOutput = getCriticalRules(root, outputDest, destDelim);
+      return Object.keys(criticalOutput).reduce(
+        (init: Object, cur: string): Function => {
+          const criticalCSS = postcss.root();
+          const filePath = path.join(outputPath, cur);
+          criticalOutput[cur].each((rule: Object): Function =>
+            criticalCSS.append(rule.clone())
+          );
+          return (
+            postcss(minify === true ? [cssnano] : [])
+              // @TODO Use from/to correctly.
+              .process(criticalCSS, {
+                from: undefined,
+              })
+              .then(dryRunOrWriteFile.bind(null, dryRun, filePath))
+              .then(clean.bind(null, root, preserve))
+          );
+        },
+        {}
+      );
+    },
   };
-}
+};
 
-module.exports = postcss.plugin("postcss-critical", buildCritical);
+module.exports.postcss = true;

@@ -2,11 +2,23 @@
 var fs = require("fs");
 var postcss = require("postcss");
 var postcssCriticalCSS = require("..");
+var postcssReporter = require('postcss-reporter');
 
 const basePath = `${process.cwd()}/example`;
 function cb(files) {
   function useFileData(data, file) {
-    postcss([postcssCriticalCSS({ outputPath: basePath })])
+    postcss([
+        postcssCriticalCSS({ 
+          outputPath: basePath,
+          preserve: false,
+        }),
+        postcssReporter({
+          plugin: [
+            '@veritashealth/postcss-critical-css'
+          ],
+          filter: ((message) => { return true })
+        })
+      ])
       .process(data, { from: undefined })
       .then(result => {
         fs.writeFile(

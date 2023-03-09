@@ -40,7 +40,7 @@ function correctSourceOrder(root: Object): Object {
       rule = postcss
         .atRule({
           name: rule.parent.name,
-          params: rule.parent.params
+          params: rule.parent.params,
         })
         .append(rule.clone());
       rule.source = child.source;
@@ -71,7 +71,7 @@ function establishContainer(node: Object): Object {
         name: node.parent.name,
         type: node.parent.type,
         params: node.parent.params,
-        nodes: [node]
+        nodes: [node],
       })
     : node.clone();
 }
@@ -101,35 +101,55 @@ function updateCritical(root: Object, update: Object): Object {
  * @param {object} PostCSS CSS object.
  * @param {boolean} Whether or not to remove selectors from primary CSS document.
  * @param {string} Default output CSS file name.
+ * @param {string} Delimiter for separating destination file names.
  * @return {object} Object containing critical rules, organized by output destination
  */
-export function getCriticalRules(css: Object, defaultDest: string): Object {
-  const critical: Object = getCriticalFromAtRule({ css, defaultDest });
+export function getCriticalRules(
+  css: Object,
+  defaultDest: string,
+  destDelim: string
+): Object {
+  // console.log(`destDelim: "${destDelim}"`);
+
+  const critical: Object = getCriticalFromAtRule({
+    css,
+    defaultDest,
+    destDelim,
+  });
+
   css.walkDecls("critical-selector", (decl: Object) => {
-    const { parent, value } = decl;
-    const dest = getCriticalDestination(parent, defaultDest);
+    const parent = decl.parent;
+    const value = decl.value;
+
+    const targets = getCriticalDestination(parent, defaultDest);
+    const destList = targets.split(destDelim);
     const container = establishContainer(parent);
     const childRules = value === "scope" ? getChildRules(css, parent) : [];
-    // Sanity check, make sure we've got a root node
-    critical[dest] = critical[dest] || postcss.root();
 
-    switch (value) {
-      case "scope":
-        // Add all child rules
-        const criticalRoot = childRules.reduce(
-          (acc: Object, rule: Object): Object => {
-            return acc.append(rule.clone());
-          },
-          critical[dest].append(container)
-        );
+    destList.forEach((dest: string) => {
+      // Sanity check, make sure we've got a root node
+      critical[dest] = critical[dest] || postcss.root();
 
-        critical[dest] = clean(correctSourceOrder(criticalRoot));
-        break;
+      let criticalRoot;
 
-      default:
-        critical[dest] = updateCritical(critical[dest], container);
-        break;
-    }
+      switch (value) {
+        case "scope":
+          // Add all child rules
+          criticalRoot = childRules.reduce(
+            (acc: Object, rule: Object): Object => {
+              return acc.append(rule.clone());
+            },
+            critical[dest].append(container)
+          );
+
+          critical[dest] = clean(correctSourceOrder(criticalRoot));
+          break;
+
+        default:
+          critical[dest] = updateCritical(critical[dest], container);
+          break;
+      }
+    });
   });
   return critical;
 }

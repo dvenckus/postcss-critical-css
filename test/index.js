@@ -1,20 +1,23 @@
 #!/usr/bin/env node
-
+// @flow
 const fs = require("fs");
 const test = require("tape");
 const chalk = require("chalk");
 const cliArgs = require("minimist")(process.argv.slice(2), {
   boolean: ["preserve"],
-  default: { preserve: true }
+  default: { preserve: true },
 });
 const fixturesDir = cliArgs["fixtures-dir"] || "fixtures";
+const testOutput = "test/output";
+const testOutputPath = `${process.cwd()}/${testOutput}`;
 let basePath = cliArgs.outputPath || `${process.cwd()}/test/${fixturesDir}`;
 if (cliArgs.noArgs) {
   basePath = process.cwd();
 }
 
-function compareCritical(t, name, testNonCritical) {
+function compareCritical(t, name, testNonCritical = false) {
   let actual = cliArgs.outputDest || "critical.css";
+  const path = cliArgs.noArgs ? basePath : testOutputPath;
   const expected = testNonCritical
     ? `${name}.non-critical.expected.css`
     : `${name}.critical.expected.css`;
@@ -24,8 +27,10 @@ function compareCritical(t, name, testNonCritical) {
       : `${name}.critical.actual.css`;
   }
   console.log(`Comparing: ${expected} and ${actual}`);
+  // console.log(`expected: ${basePath}/${expected}`);
+  // console.log(`actual: ${path}/${actual}`);
   t.equal(
-    fs.readFileSync(`${basePath}/${actual}`, "utf8").trim(),
+    fs.readFileSync(`${path}/${actual}`, "utf8").trim(),
     fs.readFileSync(`${basePath}/${expected}`, "utf8").trim(),
     `Expect ${chalk.bold(name)} should be equal to actual output`
   );
@@ -35,31 +40,31 @@ function compareCritical(t, name, testNonCritical) {
 function initTests(key) {
   const tests = {
     default: () => {
-      test("Testing default critical result", t => {
+      test("Testing default critical result", (t) => {
         compareCritical(t, "default");
       });
 
-      test("Testing default non-critical result", t => {
+      test("Testing default non-critical result", (t) => {
         compareCritical(t, "default", true);
       });
     },
 
     this: () => {
-      test('Testing "this" critical result', t => {
+      test('Testing "this" critical result', (t) => {
         compareCritical(t, "this");
       });
 
-      test('Testing "this" non-critical result', t => {
+      test('Testing "this" non-critical result', (t) => {
         compareCritical(t, "this", true);
       });
     },
 
     atRule: () => {
-      test('Testing "atRule" critical result', t => {
+      test('Testing "atRule" critical result', (t) => {
         compareCritical(t, "atRule");
       });
 
-      test('Testing "atRule" non-critical result', t => {
+      test('Testing "atRule" non-critical result', (t) => {
         compareCritical(t, "atRule", true);
       });
     },
@@ -69,7 +74,7 @@ function initTests(key) {
         chalk.yellow(
           `Testing ${chalk.bold("atRule.wrapping")} critical result`
         ),
-        t => {
+        (t) => {
           compareCritical(t, "atRule-wrapping");
         }
       );
@@ -78,18 +83,18 @@ function initTests(key) {
         chalk.yellow(
           `Testing ${chalk.bold("atRule.wrapping")} non-critical result`
         ),
-        t => {
+        (t) => {
           compareCritical(t, "atRule-wrapping", true);
         }
       );
     },
 
     media: () => {
-      test('Testing "media" critical result', t => {
+      test('Testing "media" critical result', (t) => {
         compareCritical(t, "media");
       });
 
-      test('Testing "media" non-critical result', t => {
+      test('Testing "media" non-critical result', (t) => {
         compareCritical(t, "media", true);
       });
     },
@@ -97,14 +102,14 @@ function initTests(key) {
     scope: () => {
       test(
         chalk.yellow(`Testing ${chalk.bold("scope")} critical result`),
-        t => {
+        (t) => {
           compareCritical(t, "scope");
         }
       );
 
       test(
         chalk.yellow(`Testing ${chalk.bold("scope")} non-critical result`),
-        t => {
+        (t) => {
           compareCritical(t, "scope", true);
         }
       );
@@ -113,7 +118,7 @@ function initTests(key) {
     mediaScope: () => {
       test(
         chalk.yellow(`Testing ${chalk.bold("media-scope")} critical result`),
-        t => {
+        (t) => {
           compareCritical(t, "media-scope");
         }
       );
@@ -122,7 +127,7 @@ function initTests(key) {
         chalk.yellow(
           `Testing ${chalk.bold("media-scope")} non-critical result`
         ),
-        t => {
+        (t) => {
           compareCritical(t, "media-scope", true);
         }
       );
@@ -131,25 +136,25 @@ function initTests(key) {
     mediaThis: () => {
       test(
         chalk.yellow(`Testing ${chalk.bold("media-this")} critical result`),
-        t => {
+        (t) => {
           compareCritical(t, "media-this");
         }
       );
 
       test(
         chalk.yellow(`Testing ${chalk.bold("media-this")} non-critical result`),
-        t => {
+        (t) => {
           compareCritical(t, "media-this", true);
         }
       );
-    }
+    },
   };
 
   if (key) {
     const keys = key.split(",");
-    keys.forEach(k => tests[k]());
+    keys.forEach((k) => tests[k]());
   } else {
-    Object.keys(tests).forEach(key => tests[key]());
+    Object.keys(tests).forEach((key) => tests[key]());
   }
 }
 

@@ -62,6 +62,30 @@ Will output:
 }
 ```
 
+### Using the `@critical` atRule with multiple custom file paths
+
+```css
+/* In foo.css */
+@critical bar.css baz.css;
+
+.foo {
+  border: 3px solid gray;
+  display: flex;
+  padding: 1em;
+}
+```
+
+Will output:
+
+```css
+/* In bar.css and also in baz.css*/
+.foo {
+  border: 3px solid gray;
+  display: flex;
+  padding: 1em;
+}
+```
+
 ### Using the `@critical` atRule with a subset of styles
 
 ```css
@@ -84,6 +108,34 @@ Will output:
 
 ```css
 /* In critical.css */
+.bar {
+  border: 10px solid gold;
+  color: gold;
+}
+```
+
+### Using the `@critical` atRule with a subset of styles
+
+```css
+/* In foo.css */
+.foo {
+  border: 3px solid gray;
+  display: flex;
+  padding: 1em;
+}
+
+@critical critical-1.css critical-2.css {
+  .bar {
+    border: 10px solid gold;
+    color: gold;
+  }
+}
+```
+
+Will output:
+
+```css
+/* In critical-1.css and also in critical-2.css */
 .bar {
   border: 10px solid gold;
   color: gold;
@@ -199,9 +251,10 @@ Will output:
 
 The plugin takes a single object as its only parameter. The following properties are valid:
 
-| Arg          | Type      | Description                                                                                                                                                                           | Default                   |
-| ------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `outputPath` | `string`  | Path to which critical CSS should be output                                                                                                                                           | Current working directory |
-| `outputDest` | `string`  | Default critical CSS file name                                                                                                                                                        | `"critical.css"`          |
-| `preserve`   | `boolean` | Whether or not to remove selectors from primary CSS document once they've been marked as critical. This should prevent duplication of selectors across critical and non-critical CSS. | `true`                    |
-| `minify`     | `boolean` | Minify output CSS?                                                                                                                                                                    | `true`                    |
+| Arg | Type | Description | Default |
+---|---|---|---|
+| `outputPath` | `string`  | Path to which critical CSS should be output | Current working directory |
+| `outputDest` | `string`  | Default critical CSS file name | `"critical.css"` |
+| `preserve`   | `boolean` | Whether or not to remove selectors from primary CSS document once they’ve been marked as critical. This should prevent duplication of selectors across critical and non-critical CSS.  | `true` |
+| `minify`     | `boolean` | Minify output CSS?                                             | `true` |
+| `destDelim`  | `string`  | Delimiter that separates multiple critical destination files.  | `” “` |

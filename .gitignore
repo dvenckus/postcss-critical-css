@@ -1,5 +1,12 @@
 .idea
 .DS_Store
-dist/
+# dist/
 node_modules/
 npm-debug.log
+
+# Ignore generated css files
+!example/example.css
+example/*.css
+
+# Ignore test output
+test/output/*.css
