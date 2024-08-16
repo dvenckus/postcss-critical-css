@@ -156,7 +156,7 @@ module.exports = (opts: Object): Function => {
   return {
     postcssPlugin: "postcss-critical-css",
     Once(root: Object, opts: Object): Object {
-      var { dryRun, preserve, minify, outputPath, outputDest, destDelim } =
+      let { dryRun, preserve, minify, outputPath, outputDest, destDelim } =
         args;
       dryRun = dryRun === true;
       preserve = preserve === true;
